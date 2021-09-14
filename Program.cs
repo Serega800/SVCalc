@@ -12,6 +12,11 @@ namespace SVCalc
                 var line = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(line))
                     return;
+                var lexer = new Lexer(line);
+                while (true)
+                {
+                    var token = lexer.NextToken();
+                }
 
                 if (line == "1 + 2 + 3")
                     Console.WriteLine("7");
@@ -24,7 +29,15 @@ namespace SVCalc
     enum SyntaxKind
     {
         NumberToken,
-        WhiteSpaceToken
+        WhiteSpaceToken,
+        PlusToken,
+        MinusToken,
+        StarToken,
+        SlashToken,
+        OpenParenthesisToken,
+        CloseParenthesisToken,
+        BadToken,
+        EndOfFileToken
     }
     class SyntaxToken
     {
@@ -64,6 +77,9 @@ namespace SVCalc
             // <numbers>
             // +-*/()
             // <whitespace>
+            if(_position >= _text.Length)            
+                return new SyntaxToken(SyntaxKind.EndOfFileToken, _position, "\0", null);            
+
             if (char.IsDigit(Current))
             {
                 var start = _position;
@@ -86,6 +102,21 @@ namespace SVCalc
                 int.TryParse(text, out var value);
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text, value);
             }
+            if (Current == '+')
+                return new SyntaxToken(SyntaxKind.PlusToken, _position++, "+", null);
+            else if (Current == '-')
+                return new SyntaxToken(SyntaxKind.MinusToken, _position++, "-", null);
+            else if (Current == '*')
+                return new SyntaxToken(SyntaxKind.StarToken, _position++, "*", null);
+            else if (Current == '/')
+                return new SyntaxToken(SyntaxKind.SlashToken, _position++, "/", null);
+            else if (Current == '(')
+                return new SyntaxToken(SyntaxKind.OpenParenthesisToken, _position++, "(", null);
+            else if (Current == ')')
+                return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
+
+            return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
+
         }
     }
 }
