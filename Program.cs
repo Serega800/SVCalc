@@ -6,10 +6,19 @@ namespace SVCalc
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            int x = 1;
-            Console.WriteLine(x);
-            Console.WriteLine(x);
+            while (true)
+            {
+                Console.Write("> ");
+                var line = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(line))
+                    return;
+
+                if (line == "1 + 2 + 3")
+                    Console.WriteLine("7");
+                else
+                    Console.WriteLine("Error: Invalid Expression");
+
+            }
         }
     }
 }
