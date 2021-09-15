@@ -16,13 +16,14 @@ namespace SVCalc
                 while (true)
                 {
                     var token = lexer.NextToken();
+                    if (token.Kind == SyntaxKind.EndOfFileToken)
+                        break;
+                    Console.WriteLine($"{token.Kind}: '{token.Text}'");
+                    if (token.Value != null)
+                        Console.WriteLine($"{token.Value}");
+
+                    Console.WriteLine();
                 }
-
-                if (line == "1 + 2 + 3")
-                    Console.WriteLine("7");
-                else
-                    Console.WriteLine("Error: Invalid Expression");
-
             }
         }
     }
@@ -46,10 +47,12 @@ namespace SVCalc
             Kind = kind;
             Position = position;
             Text = text;
+            Value = value;
         }
         public SyntaxKind Kind { get; }
         public int Position { get; }
         public string Text{ get; }
+        public object Value { get; }
     }
     class Lexer
     {
@@ -116,7 +119,6 @@ namespace SVCalc
                 return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
 
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
-
         }
     }
 }
