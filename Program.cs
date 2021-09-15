@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SVCalc
 {
@@ -102,8 +103,7 @@ namespace SVCalc
 
                 var length = _position - start;
                 var text = _text.Substring(start, length);
-                int.TryParse(text, out var value);
-                return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text, value);
+                return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text, null);
             }
             if (Current == '+')
                 return new SyntaxToken(SyntaxKind.PlusToken, _position++, "+", null);
@@ -119,6 +119,38 @@ namespace SVCalc
                 return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
 
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
+        }
+    }
+    class Parser
+    {
+        private readonly SyntaxToken[] _tokens;
+        private int _position;
+
+        public Parser(string text)
+        {
+            
+            var tokens = new List<SyntaxToken>();
+
+            var lexer = new Lexer(text);
+            SyntaxToken token;
+            do
+            {
+                token = lexer.NextToken();
+                if (token.Kind != SyntaxKind.WhiteSpaceToken && 
+                    token.Kind != SyntaxKind.BadToken)
+                {
+                    tokens.Add(token);
+                }
+            } while (token.Kind != SyntaxKind.EndOfFileToken);
+            _tokens = tokens.ToArray();
+        }
+        private SyntaxToken Peek(int offset)
+        {
+            var index = _position + offset;
+            if (index >= _tokens.Length)
+                return _tokens[-_tokens.Length - 1];
+
+            return _tokens[index];
         }
     }
 }
