@@ -3,6 +3,15 @@ using System.Collections.Generic;
 
 namespace SVCalc
 {
+    //  1 + 2 * 3
+    //
+    //
+    //      +
+    //     /  \
+    //    1    *
+    //        /  \
+    //       2    3
+
     class Program
     {
         static void Main(string[] args)
@@ -39,7 +48,8 @@ namespace SVCalc
         OpenParenthesisToken,
         CloseParenthesisToken,
         BadToken,
-        EndOfFileToken
+        EndOfFileToken,
+        NumberExpression
     }
     class SyntaxToken
     {
@@ -120,6 +130,24 @@ namespace SVCalc
 
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
         }
+    }
+    abstract class SyntaxNode
+    {
+        public abstract SyntaxKind Kind { get; }
+    }
+    abstract class ExpressionSyntax : SyntaxNode
+    {
+
+    }
+    sealed class NumberSyntax : ExpressionSyntax
+    {
+        public NumberSyntax(SyntaxToken numberToken)
+        {
+            
+        }
+
+        public override SyntaxKind Kind => SyntaxKind.NumberExpression;
+        public SyntaxToken NumberToken { get; }
     }
     class Parser
     {
