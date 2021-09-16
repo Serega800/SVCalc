@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SVCalc
 {
@@ -22,18 +23,52 @@ namespace SVCalc
                 var line = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(line))
                     return;
-                var lexer = new Lexer(line);
-                while (true)
-                {
-                    var token = lexer.NextToken();
-                    if (token.Kind == SyntaxKind.EndOfFileToken)
-                        break;
-                    Console.WriteLine($"{token.Kind}: '{token.Text}'");
-                    if (token.Value != null)
-                        Console.WriteLine($"{token.Value}");
+                var parser = new Parser(line);
+                var expression = parser.Parse();
 
-                    Console.WriteLine();
+                var color = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                PrettyPrint(expression);
+                Console.ForegroundColor = color;
+
+                //var lexer = new Lexer(line);
+                //while (true)
+                //{
+                //    var token = lexer.NextToken();
+                //    if (token.Kind == SyntaxKind.EndOfFileToken)
+                //        break;
+                //    Console.WriteLine($"{token.Kind}: '{token.Text}'");
+                //    if (token.Value != null)
+                //        Console.WriteLine($"{token.Value}");
+
+                //    Console.WriteLine();
+                //}
+            }
+            static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
+            {
+                // └──
+                // ├──
+                // │
+
+                //var marker = isLast ? "└──" : "├──";
+                var marker = isLast ? "└──" : "├──";
+
+                Console.Write(indent);
+                Console.Write(marker); 
+                Console.Write(node.Kind);
+                
+                if (node is SyntaxToken t && t.Value != null)
+                {
+                    Console.Write(" ");
+                    Console.Write(t.Value);
                 }
+                Console.WriteLine();
+                
+                indent += isLast ? "    " : "│   ";
+                var LastChild = node.GetChildren().LastOrDefault();
+
+                foreach (var child in node.GetChildren())
+                    PrettyPrint(child, indent, child == LastChild);
             }
         }
     }
@@ -52,7 +87,7 @@ namespace SVCalc
         NumberExpression,
         BinaryExpression
     }
-    class SyntaxToken
+    class SyntaxToken : SyntaxNode
     {
         public SyntaxToken(SyntaxKind kind, int position, string text, object value)
         {
@@ -61,10 +96,15 @@ namespace SVCalc
             Text = text;
             Value = value;
         }
-        public SyntaxKind Kind { get; }
+        public override SyntaxKind Kind { get; }
         public int Position { get; }
         public string Text{ get; }
         public object Value { get; }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            return Enumerable.Empty<SyntaxNode>();
+        }
     }
     class Lexer
     {
@@ -135,6 +175,7 @@ namespace SVCalc
     abstract class SyntaxNode
     {
         public abstract SyntaxKind Kind { get; }
+        public abstract IEnumerable<SyntaxNode> GetChildren();
     }
     abstract class ExpressionSyntax : SyntaxNode
     {
@@ -149,6 +190,11 @@ namespace SVCalc
 
         public override SyntaxKind Kind => SyntaxKind.NumberExpression;
         public SyntaxToken NumberToken { get; }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return NumberToken;
+        }
     }
     sealed class BinaryExpressionSyntax : ExpressionSyntax
     {
@@ -164,6 +210,13 @@ namespace SVCalc
         public ExpressionSyntax Right { get; }
 
         public override SyntaxKind Kind => SyntaxKind.BinaryExpression;
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return Left;
+            yield return OperatorToken;
+            yield return Right;
+        }
     }
     class Parser
     {
@@ -207,6 +260,7 @@ namespace SVCalc
         {
             if (Current.Kind == kind)
                 return NextToken();
+
             return new SyntaxToken(kind, Current.Position, null, null);
         }
         public ExpressionSyntax Parse()
