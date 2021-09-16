@@ -50,12 +50,13 @@ namespace SVCalc
                 // ├──
                 // │
 
+                //var marker = isLast ? "└──" : "├──";
                 var marker = isLast ? "└──" : "├──";
 
                 Console.Write(indent);
-                Console.Write(marker);
+                Console.Write(marker); 
                 Console.Write(node.Kind);
-
+                
                 if (node is SyntaxToken t && t.Value != null)
                 {
                     Console.Write(" ");
@@ -63,7 +64,7 @@ namespace SVCalc
                 }
                 Console.WriteLine();
                 
-                indent = isLast ? "    " : "│   ";
+                indent += isLast ? "    " : "│   ";
                 var LastChild = node.GetChildren().LastOrDefault();
 
                 foreach (var child in node.GetChildren())
