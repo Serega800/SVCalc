@@ -31,6 +31,15 @@ namespace SVCalc
                 PrettyPrint(expression);
                 Console.ForegroundColor = color;
 
+                if (parser.Diagnostics.Any())
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    foreach(var diagnostic in parser.Diagnostics)                    
+                        Console.WriteLine(diagnostic);
+                    
+                    Console.ForegroundColor = color;
+                }
+
                 //var lexer = new Lexer(line);
                 //while (true)
                 //{
@@ -110,10 +119,12 @@ namespace SVCalc
     {
         private readonly string _text;
         private int _position;
+        private List<string> _diagnostics = new List<string>();
         public Lexer(string text)
         {
             _text = text;
         }
+        public IEnumerable<string> Diagnostics => _diagnostics;
         public char Current
         {
             get
@@ -169,6 +180,7 @@ namespace SVCalc
             else if (Current == ')')
                 return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
 
+            _diagnostics.Add($"ERROR: bad character input: '{Current}'");
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
         }
     }
@@ -218,9 +230,23 @@ namespace SVCalc
             yield return Right;
         }
     }
+    sealed class SyntaxTree
+    {
+        public SyntaxTree(IEnumerable<string> diagnostics, ExpressionSyntax root, SyntaxToken endOfFileToken)
+        {
+            Diagnostics = diagnostics.ToArray();
+            Root = root;
+            EndOFileToken = endOfFileToken;
+        }
+
+        public IReadOnlyList<string> Diagnostics { get; }
+        public ExpressionSyntax Root { get; }
+        public SyntaxToken EndOFileToken { get; }
+    }
     class Parser
     {
         private readonly SyntaxToken[] _tokens;
+        private List<string> _diagnostics = new List<string>();
         private int _position;
 
         public Parser(string text)
@@ -240,7 +266,9 @@ namespace SVCalc
                 }
             } while (token.Kind != SyntaxKind.EndOfFileToken);
             _tokens = tokens.ToArray();
+            _diagnostics.AddRange(lexer.Diagnostics);
         }
+        public IEnumerable<string> Diagnostics => _diagnostics;
         private SyntaxToken Peek(int offset)
         {
             var index = _position + offset;
@@ -260,7 +288,7 @@ namespace SVCalc
         {
             if (Current.Kind == kind)
                 return NextToken();
-
+            _diagnostics.Add($"ERROR: Unexpected token <{Current.Kind}>, expected <{kind}>");
             return new SyntaxToken(kind, Current.Position, null, null);
         }
         public ExpressionSyntax Parse()
